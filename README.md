@@ -4,6 +4,9 @@ Static website for the Yave brand. No build step, no dependencies.
 
 ## Files
 - `index.html` – homepage with the size finder and waitlist
+- `cart.html` – cart and checkout
+- `admin.html`, `admin.js`, `admin.css` – the private orders dashboard at `/admin`
+- `api/server.js` – receives orders and powers the dashboard (see `SETUP.md`)
 - `products.js` – your size charts (one per garment type) and your product list. Each product picks its chart
 - `product.html` – the product page (one template, filled from `products.js`)
 - `app.js` – the shop, product pages and size popup logic

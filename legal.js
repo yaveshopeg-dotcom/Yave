@@ -10,7 +10,7 @@ const LEGAL = {
 <h2>Orders and prices</h2>
 <p>Prices are shown in Egyptian pounds (EGP). An order is accepted only when we confirm it with you. We may cancel or refuse an order, for example if an item is out of stock or a price was shown by mistake. If we cancel, we will tell you and refund anything you paid.</p>
 <h2>Delivery and payment</h2>
-<p>We confirm your delivery fee and arrival date with you before your order is sent. The payment methods we accept are shown when you order.</p>
+<p>We call you after you order to confirm your delivery fee and arrival date. Payment is cash on delivery: you pay the courier when your order arrives.</p>
 <h2>Sizing and product information</h2>
 <p>The size chart and the size recommendation are guides based on our garment measurements. Garments are measured by hand, so a difference of 1 to 2 cm is normal. Colours can look different on different screens.</p>
 <h2>Our content</h2>

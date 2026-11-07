@@ -221,11 +221,20 @@ function renderProduct(main) {
         "</div>" +
         '<p class="size-selected" data-size-selected role="status"></p>'
       : "") +
-    '<button class="btn" type="button" disabled>Add to cart (store coming soon)</button></div>';
+    '<button class="btn" type="button" data-add>Add to cart</button>' +
+    '<p class="add-note" role="status"></p></div>';
 
   main.querySelectorAll("[data-img]").forEach((b) => b.addEventListener("click", () => {
     document.getElementById("main-img").src = b.dataset.img;
   }));
+  const addBtn = main.querySelector("[data-add]");
+  const addNote = main.querySelector(".add-note");
+  addBtn.addEventListener("click", () => {
+    const chosen = main.querySelector("[data-size-picker] input:checked");
+    if (chart && !chosen) { addNote.textContent = "Choose a size first."; return; }
+    addToCart(p.id, chart ? chosen.value : "");
+    addNote.innerHTML = 'Added to your cart. <a class="textlink" href="cart.html">View cart</a>';
+  });
   const picker = main.querySelector("[data-size-picker]");
   const out = main.querySelector("[data-size-selected]");
   if (picker) picker.addEventListener("change", () => {
@@ -234,6 +243,130 @@ function renderProduct(main) {
   });
 }
 
+
+
+/* ---------- Cart and checkout (cash on delivery) ---------- */
+
+const CART_KEY = "yave-cart";
+let cartMem = null;
+
+function loadCart() {
+  if (cartMem) return cartMem;
+  let c = [];
+  try { c = JSON.parse(localStorage.getItem(CART_KEY) || "[]"); } catch { c = []; }
+  cartMem = (Array.isArray(c) ? c : []).filter((i) => i && PRODUCTS.some((p) => p.id === i.id) && i.qty >= 1);
+  return cartMem;
+}
+function saveCart() {
+  try { localStorage.setItem(CART_KEY, JSON.stringify(cartMem)); } catch { /* storage blocked: cart lives until the page closes */ }
+  updateCartCount();
+}
+function cartCount() { return loadCart().reduce((n, i) => n + i.qty, 0); }
+function updateCartCount() {
+  const n = cartCount();
+  document.querySelectorAll(".cart-count").forEach((el) => { el.textContent = n; el.hidden = n === 0; });
+}
+function addToCart(id, size) {
+  const cart = loadCart();
+  const hit = cart.find((i) => i.id === id && i.size === size);
+  if (hit) hit.qty = Math.min(10, hit.qty + 1); else cart.push({ id, size, qty: 1 });
+  saveCart();
+}
+function addCartLink() {
+  const nav = document.querySelector("header.nav nav");
+  if (!nav) return;
+  const a = document.createElement("a");
+  a.className = "cart-link";
+  a.href = "cart.html";
+  a.innerHTML = 'Cart <span class="cart-count" hidden></span>';
+  nav.appendChild(a);
+  updateCartCount();
+}
+
+function renderCartPage(main) {
+  main.innerHTML =
+    "<h1>Cart</h1>" +
+    '<div data-cart-list></div>' +
+    '<form class="checkout" data-checkout novalidate hidden>' +
+      "<h2>Delivery details</h2>" +
+      '<label>Full name<input name="name" autocomplete="name" required maxlength="80"></label>' +
+      '<label>Phone number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" required maxlength="20" placeholder="01xxxxxxxxx"></label>' +
+      '<label>City or governorate<input name="city" autocomplete="address-level2" required maxlength="60"></label>' +
+      '<label>Full address<textarea name="address" rows="3" autocomplete="street-address" required maxlength="250" placeholder="Street, building, floor, apartment"></textarea></label>' +
+      '<label>Email (optional)<input name="email" type="email" autocomplete="email" maxlength="120"></label>' +
+      '<label>Notes (optional)<textarea name="notes" rows="2" maxlength="300"></textarea></label>' +
+      '<label class="sr">Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label>' +
+      '<p class="pay-note">Payment is cash on delivery: you pay the courier when your order arrives. We will call you to confirm the delivery fee and arrival date.</p>' +
+      '<button class="btn" type="submit">Place order</button>' +
+      '<p class="form-error" role="alert"></p>' +
+    "</form>";
+  const list = main.querySelector("[data-cart-list]");
+  const form = main.querySelector("[data-checkout]");
+
+  function draw() {
+    const cart = loadCart();
+    if (!cart.length) {
+      list.innerHTML = '<p>Your cart is empty.</p><p><a class="textlink" href="index.html">Back to the shop</a></p>';
+      form.hidden = true;
+      return;
+    }
+    form.hidden = false;
+    const rows = cart.map((it, i) => {
+      const p = PRODUCTS.find((x) => x.id === it.id);
+      return '<div class="cart-row">' +
+        '<div class="cart-img">' + (p.images && p.images[0] ? '<img src="' + esc(p.images[0]) + '" alt="">' : "") + "</div>" +
+        '<div class="cart-info"><strong>' + esc(p.name) + "</strong>" + (it.size ? "<span>Size " + esc(it.size) + "</span>" : "") + "<span>" + money(p.price) + "</span>" +
+          '<button type="button" class="link-btn" data-rm="' + i + '">Remove</button></div>' +
+        '<div class="qty" role="group" aria-label="Quantity"><button type="button" data-dec="' + i + '" aria-label="Fewer">−</button><span>' + it.qty + '</span><button type="button" data-inc="' + i + '" aria-label="More">+</button></div>' +
+        '<div class="cart-line">' + money(p.price * it.qty) + "</div></div>";
+    }).join("");
+    const subtotal = cart.reduce((n, it) => n + PRODUCTS.find((x) => x.id === it.id).price * it.qty, 0);
+    list.innerHTML = rows + '<div class="cart-total"><span>Subtotal</span><strong>' + money(subtotal) + "</strong></div>" +
+      '<p class="note">Delivery fee is confirmed by phone after you order.</p>';
+  }
+  list.addEventListener("click", (e) => {
+    const cart = loadCart();
+    const t = e.target.closest("button");
+    if (!t) return;
+    if (t.dataset.inc !== undefined) { const it = cart[+t.dataset.inc]; it.qty = Math.min(10, it.qty + 1); }
+    else if (t.dataset.dec !== undefined) { const it = cart[+t.dataset.dec]; it.qty = Math.max(1, it.qty - 1); }
+    else if (t.dataset.rm !== undefined) cart.splice(+t.dataset.rm, 1);
+    else return;
+    saveCart();
+    draw();
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = form.querySelector(".form-error");
+    err.textContent = "";
+    const f = new FormData(form);
+    const customer = { name: f.get("name"), phone: f.get("phone"), city: f.get("city"), address: f.get("address"), email: f.get("email"), notes: f.get("notes") };
+    if (String(customer.name).trim().length < 2) { err.textContent = "Enter your full name."; return; }
+    if (String(customer.phone).replace(/\D/g, "").length < 10) { err.textContent = "Enter a phone number we can call, at least 10 digits."; return; }
+    if (String(customer.city).trim().length < 2) { err.textContent = "Enter your city or governorate."; return; }
+    if (String(customer.address).trim().length < 5) { err.textContent = "Enter your full delivery address."; return; }
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true; btn.textContent = "Placing order...";
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer, items: loadCart(), website: f.get("website") }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
+      cartMem = []; saveCart();
+      main.innerHTML = '<div class="order-done"><h1>Order received</h1><p class="order-no">' + esc(data.id) + "</p>" +
+        "<p>Thank you. We will call you on the number you gave to confirm your delivery fee and arrival date. You pay the courier in cash when your order arrives.</p>" +
+        '<p><a class="textlink" href="index.html">Back to the shop</a></p></div>';
+      window.scrollTo(0, 0);
+    } catch (ex) {
+      err.textContent = ex.message;
+      btn.disabled = false; btn.textContent = "Place order";
+    }
+  });
+  draw();
+}
 
 /* ---------- Footer and legal pages ---------- */
 
@@ -270,6 +403,9 @@ function renderLegal(main) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  addCartLink();
+  const cartMain = document.querySelector("[data-cart]");
+  if (cartMain) renderCartPage(cartMain);
   const foot = document.querySelector("[data-footer]");
   if (foot) renderFooter(foot);
   const legalEl = document.querySelector("[data-legal]");

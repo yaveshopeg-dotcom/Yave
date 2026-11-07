@@ -1,13 +1,47 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "functions": {
+    "api/server.js": {
+      "includeFiles": "products.js"
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
       ]
+    },
+    {
+      "source": "/admin",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/orders",
+      "destination": "/api/server?r=orders"
+    },
+    {
+      "source": "/api/admin/orders",
+      "destination": "/api/server?r=admin"
     }
   ]
 }
