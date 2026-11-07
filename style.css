@@ -189,3 +189,6 @@ html.sg-open { overflow: hidden; }
 .desc { max-width: 46ch; margin: 0 0 24px; }
 .hero.compact { display: block; padding-top: clamp(12px, 3vw, 32px); }
 .hero.compact .lede { max-width: 54ch; }
+
+.sg-sub { text-align: center; color: var(--stone); margin: -10px 0 16px; }
+.shop { padding-top: clamp(16px, 3vw, 32px); }

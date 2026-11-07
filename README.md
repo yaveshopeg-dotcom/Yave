@@ -4,9 +4,9 @@ Static website for the Yave brand. No build step, no dependencies.
 
 ## Files
 - `index.html` – homepage with the size finder and waitlist
-- `products.js` – your product list. Add a product here and it appears on the home page with its own page
+- `products.js` – your size charts (one per garment type) and your product list. Each product picks its chart
 - `product.html` – the product page (one template, filled from `products.js`)
-- `app.js` – size data and recommendation logic (edit `SIZES` to change the chart; also builds the size guide popup)
+- `app.js` – the shop, product pages and size popup logic
 - `logo.png` / `favicon.png` – brand logo (transparent) and tab icon
 - `style.css` – all styles and colour tokens (`:root`)
 
@@ -22,8 +22,9 @@ In `index.html`, replace `YOUR_FORM_ID` in the waitlist form's `action` with a r
 
 ## Adding a product
 1. Upload the photos to an `images` folder in the repo.
-2. Copy the example in `products.js`, remove the `//` marks and fill it in.
-3. Commit. The home page and a product page update by themselves.
+2. In `products.js`, add a size chart for the garment under `CHARTS` if it's a new type (crewneck, hoodie, pants...).
+3. Copy the product example, remove the `//` marks, fill it in and set `chart` to that chart's name.
+4. Commit. The home page and a product page update by themselves.
 
 ## Store later
 When you're ready to take orders, connect a checkout such as Stripe Checkout or Shopify and replace the disabled Add to cart button.

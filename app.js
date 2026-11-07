@@ -1,61 +1,47 @@
-// Yave size data (all garment measurements in cm, flat).
-// Source: Premium oversized crewneck chart. Swap these numbers if you change blanks or supplier.
-const SIZES = [
-  { name: "S",   width: 56, length: 69, weight: [50, 65] },
-  { name: "M",   width: 58, length: 70, weight: [65, 75] },
-  { name: "L",   width: 62, length: 73, weight: [75, 85] },
-  { name: "XL",  width: 64, length: 74, weight: [85, 95] },
-  { name: "2XL", width: 66, length: 76, weight: [95, 105] },
-];
-
-function baseIndex(kg) {
-  for (let i = 0; i < SIZES.length; i++) if (kg <= SIZES[i].weight[1]) return i;
-  return SIZES.length - 1;
-}
-
-function recommend(heightCm, weightKg, fit) {
+function recommend(chart, heightCm, weightKg, fit) {
+  const sizes = chart.sizes;
   const notes = [];
-  const base = baseIndex(weightKg);
-  const s = SIZES[base];
+  let base = sizes.findIndex((s) => weightKg <= s.weight[1]);
+  if (base === -1) base = sizes.length - 1;
+  const s = sizes[base];
 
-  if (weightKg < SIZES[0].weight[0]) notes.push("Your weight is below our chart. S is our smallest size.");
-  if (weightKg > SIZES[SIZES.length - 1].weight[1]) notes.push("Your weight is above our chart. 2XL is our largest size.");
+  if (weightKg < sizes[0].weight[0]) notes.push("Your weight is below this chart. " + sizes[0].name + " is the smallest size.");
+  if (weightKg > sizes[sizes.length - 1].weight[1]) notes.push("Your weight is above this chart. " + sizes[sizes.length - 1].name + " is the largest size.");
 
-  if (base < SIZES.length - 1 && weightKg >= s.weight[1] - 2 && weightKg <= s.weight[1])
-    notes.push("You're between " + s.name + " and " + SIZES[base + 1].name + ". " + SIZES[base + 1].name + " gives you more room.");
+  if (base < sizes.length - 1 && weightKg >= s.weight[1] - 2 && weightKg <= s.weight[1])
+    notes.push("You're between " + s.name + " and " + sizes[base + 1].name + ". " + sizes[base + 1].name + " gives you more room.");
   if (base > 0 && weightKg <= s.weight[0] + 2 && weightKg > s.weight[0])
-    notes.push("You're between " + SIZES[base - 1].name + " and " + s.name + ". " + SIZES[base - 1].name + " fits closer.");
+    notes.push("You're between " + sizes[base - 1].name + " and " + s.name + ". " + sizes[base - 1].name + " fits closer.");
 
   if (heightCm >= 185) notes.push("At your height the length will sit shorter on you. Size up if you want it longer.");
   if (heightCm <= 163) notes.push("At your height the length will sit longer on you.");
 
   let idx = base;
   if (fit === "snug") idx = Math.max(base - 1, 0);
-  if (fit === "relaxed") idx = Math.min(base + 1, SIZES.length - 1);
+  if (fit === "relaxed") idx = Math.min(base + 1, sizes.length - 1);
   return { idx, base, notes };
 }
 
-/* ---------- Size guide popup ---------- */
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function money(n) { return CURRENCY + " " + Number(n).toLocaleString("en-US"); }
+
+/* ---------- Size guide popup (one popup, filled with the product's own chart) ---------- */
 
 const MODAL_HTML = `
 <div class="sg-box">
   <button class="sg-close" type="button" aria-label="Close size guide">&times;</button>
   <h2 id="sg-title">Size guide</h2>
+  <p class="sg-sub" data-sg-sub></p>
   <div class="tablist" role="tablist" aria-label="Size guide">
     <button role="tab" id="sg-tab-chart" aria-selected="true" aria-controls="sg-panel-chart">Size chart</button>
     <button role="tab" id="sg-tab-rec" aria-selected="false" aria-controls="sg-panel-rec" tabindex="-1">Size recommendation</button>
   </div>
 
   <div role="tabpanel" id="sg-panel-chart" aria-labelledby="sg-tab-chart">
-    <div class="tablewrap">
-      <table>
-        <thead><tr><th scope="col">Size</th><th scope="col">Width</th><th scope="col">Length</th><th scope="col">Avg. weight</th></tr></thead>
-        <tbody>${SIZES.map((s) =>
-          `<tr data-size="${s.name}"><th scope="row">${s.name}</th><td>${s.width} cm</td><td>${s.length} cm</td><td>${s.weight[0]}–${s.weight[1]} kg</td></tr>`
-        ).join("")}</tbody>
-      </table>
-    </div>
-    <p class="note">All garment measurements are in cm, taken flat. Width is across the chest, length is from the top of the shoulder to the hem.</p>
+    <div class="tablewrap" data-sg-table></div>
+    <p class="note">All measurements are in cm, taken flat with the garment laid out.</p>
   </div>
 
   <div role="tabpanel" id="sg-panel-rec" aria-labelledby="sg-tab-rec" hidden>
@@ -83,16 +69,32 @@ const MODAL_HTML = `
 
 let dialog = null;
 let lastTrigger = null;
+let currentChart = null;
 
 function selectTab(name) {
-  const tabs = dialog.querySelectorAll('[role="tab"]');
-  const panels = dialog.querySelectorAll('[role="tabpanel"]');
-  tabs.forEach((t) => {
+  dialog.querySelectorAll('[role="tab"]').forEach((t) => {
     const on = t.id === "sg-tab-" + name;
     t.setAttribute("aria-selected", String(on));
     t.tabIndex = on ? 0 : -1;
   });
-  panels.forEach((p) => (p.hidden = p.id !== "sg-panel-" + name));
+  dialog.querySelectorAll('[role="tabpanel"]').forEach((p) => (p.hidden = p.id !== "sg-panel-" + name));
+}
+
+function fillChart(chart) {
+  currentChart = chart;
+  dialog.querySelector("[data-sg-sub]").textContent = chart.title || "";
+  dialog.querySelector("[data-sg-table]").innerHTML =
+    "<table><thead><tr><th scope=\"col\">Size</th>" +
+    chart.columns.map((c) => '<th scope="col">' + esc(c) + "</th>").join("") +
+    '<th scope="col">Avg. weight</th></tr></thead><tbody>' +
+    chart.sizes.map((s) =>
+      '<tr data-size="' + esc(s.name) + '"><th scope="row">' + esc(s.name) + "</th>" +
+      s.measures.map((m) => "<td>" + m + " cm</td>").join("") +
+      "<td>" + s.weight[0] + "–" + s.weight[1] + " kg</td></tr>"
+    ).join("") + "</tbody></table>";
+  const form = dialog.querySelector(".sg-form");
+  form.reset();
+  form.querySelector(".result").innerHTML = "";
 }
 
 function pickSize(name) {
@@ -104,6 +106,7 @@ function pickSize(name) {
 
 function showResult(form) {
   const result = form.querySelector(".result");
+  const chart = currentChart;
   const f = new FormData(form);
   const h = parseFloat(f.get("cm"));
   const w = parseFloat(f.get("kg"));
@@ -112,19 +115,19 @@ function showResult(form) {
     return;
   }
   const fit = f.get("fit");
-  const r = recommend(h, w, fit);
-  const s = SIZES[r.idx];
+  const r = recommend(chart, h, w, fit);
+  const s = chart.sizes[r.idx];
   const fitLine = fit === "snug"
-    ? "One size down from your base size (" + SIZES[r.base].name + ") for a snug fit."
+    ? "One size down from your base size (" + chart.sizes[r.base].name + ") for a snug fit."
     : fit === "relaxed"
-      ? "One size up from your base size (" + SIZES[r.base].name + ") for a relaxed fit."
+      ? "One size up from your base size (" + chart.sizes[r.base].name + ") for a relaxed fit."
       : "Your base size for this cut.";
   const canPick = !!document.querySelector("[data-size-picker]");
   result.innerHTML =
-    '<div class="size">' + s.name + "</div><p>" + fitLine + "</p>" +
-    '<p class="meta">Width ' + s.width + " cm, length " + s.length + " cm.</p>" +
-    r.notes.map((n) => '<p class="meta">' + n + "</p>").join("") +
-    (canPick ? '<button class="btn use" type="button" data-use="' + s.name + '">Select size ' + s.name + "</button>" : "");
+    '<div class="size">' + esc(s.name) + "</div><p>" + fitLine + "</p>" +
+    '<p class="meta">' + chart.columns.map((c, i) => esc(c) + " " + s.measures[i] + " cm").join(", ") + ".</p>" +
+    r.notes.map((n) => '<p class="meta">' + esc(n) + "</p>").join("") +
+    (canPick ? '<button class="btn use" type="button" data-use="' + esc(s.name) + '">Select size ' + esc(s.name) + "</button>" : "");
   dialog.querySelectorAll("[data-size]").forEach((tr) => tr.classList.toggle("hit", tr.dataset.size === s.name));
 }
 
@@ -136,7 +139,6 @@ function buildDialog() {
   document.body.appendChild(dialog);
 
   dialog.querySelector(".sg-close").addEventListener("click", () => dialog.close());
-  // Click on the dark backdrop closes it.
   dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
   dialog.addEventListener("close", () => {
     document.documentElement.classList.remove("sg-open");
@@ -164,34 +166,18 @@ function buildDialog() {
   });
 }
 
-function openGuide(tab, trigger) {
+function openGuide(tab, chartId, trigger) {
+  const chart = CHARTS[chartId];
+  if (!chart) return;
   if (!dialog) buildDialog();
   lastTrigger = trigger || null;
+  if (currentChart !== chart) fillChart(chart);
   selectTab(tab === "rec" ? "rec" : "chart");
   document.documentElement.classList.add("sg-open");
   if (!dialog.open) dialog.showModal();
 }
 
-/* ---------- Product size picker (used on product pages) ---------- */
-
-function initSizePicker(el) {
-  el.innerHTML = SIZES.map((s) =>
-    `<label class="pill"><input type="radio" name="size" value="${s.name}"><span>${s.name}</span></label>`
-  ).join("");
-  const out = document.querySelector("[data-size-selected]");
-  el.addEventListener("change", () => {
-    const v = el.querySelector("input:checked");
-    if (out && v) out.textContent = "Size " + v.value + " selected";
-  });
-}
-
-
 /* ---------- Shop and product pages (built from products.js) ---------- */
-
-function esc(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-function money(n) { return CURRENCY + " " + Number(n).toLocaleString("en-US"); }
 
 function renderShop(grid) {
   const empty = document.querySelector("[data-empty]");
@@ -211,10 +197,11 @@ function renderProduct(main) {
   const p = PRODUCTS.find((x) => x.id === id);
   if (!p) {
     main.className = "";
-    main.innerHTML = '<div class="band"><h2>Product not found</h2><p><a class="textlink" href="index.html#shop">Back to the shop</a></p></div>';
+    main.innerHTML = '<div class="band"><h2>Product not found</h2><p><a class="textlink" href="index.html">Back to the shop</a></p></div>';
     return;
   }
   document.title = p.name + " | Yave";
+  const chart = CHARTS[p.chart];
   const imgs = p.images || [];
   main.innerHTML =
     '<div class="gallery"><div class="product-img">' +
@@ -225,15 +212,26 @@ function renderProduct(main) {
     "<div><h1>" + esc(p.name) + "</h1>" +
     '<p class="price">' + money(p.price) + "</p>" +
     (p.description ? '<p class="desc">' + esc(p.description) + "</p>" : "") +
-    '<div class="size-head"><span>Size</span><span class="size-links">' +
-      '<button type="button" data-size-guide data-tab="chart">Size chart</button>' +
-      '<button type="button" data-size-guide data-tab="rec">Size recommendation</button></span></div>' +
-    '<div class="sizes" data-size-picker role="radiogroup" aria-label="Size"></div>' +
-    '<p class="size-selected" data-size-selected role="status"></p>' +
+    (chart
+      ? '<div class="size-head"><span>Size</span><span class="size-links">' +
+        '<button type="button" data-size-guide data-tab="chart" data-chart="' + esc(p.chart) + '">Size chart</button>' +
+        '<button type="button" data-size-guide data-tab="rec" data-chart="' + esc(p.chart) + '">Size recommendation</button></span></div>' +
+        '<div class="sizes" data-size-picker role="radiogroup" aria-label="Size">' +
+        chart.sizes.map((s) => '<label class="pill"><input type="radio" name="size" value="' + esc(s.name) + '"><span>' + esc(s.name) + "</span></label>").join("") +
+        "</div>" +
+        '<p class="size-selected" data-size-selected role="status"></p>'
+      : "") +
     '<button class="btn" type="button" disabled>Add to cart (store coming soon)</button></div>';
+
   main.querySelectorAll("[data-img]").forEach((b) => b.addEventListener("click", () => {
     document.getElementById("main-img").src = b.dataset.img;
   }));
+  const picker = main.querySelector("[data-size-picker]");
+  const out = main.querySelector("[data-size-selected]");
+  if (picker) picker.addEventListener("change", () => {
+    const v = picker.querySelector("input:checked");
+    if (out && v) out.textContent = "Size " + v.value + " selected";
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -246,10 +244,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const t = e.target.closest("[data-size-guide]");
     if (!t) return;
     e.preventDefault();
-    openGuide(t.dataset.tab, t);
+    openGuide(t.dataset.tab, t.dataset.chart, t);
   });
-
-  document.querySelectorAll("[data-size-picker]").forEach(initSizePicker);
 
   const year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();
