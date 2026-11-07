@@ -97,11 +97,6 @@ legend { font-weight: 500; font-size: 15px; margin-bottom: 8px; padding: 0; }
 .waitlist input { flex: 1 1 220px; }
 .note { min-height: 1.5em; }
 
-footer {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 24px clamp(16px, 4vw, 48px); color: var(--stone);
-}
-footer .logo img { height: 36px; }
 
 .unit-input { position: relative; display: block; }
 .unit-input input { padding-right: 44px; }
@@ -192,3 +187,21 @@ html.sg-open { overflow: hidden; }
 
 .sg-sub { text-align: center; color: var(--stone); margin: -10px 0 16px; }
 .shop { padding-top: clamp(16px, 3vw, 32px); }
+
+footer {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px 32px;
+  padding: 32px clamp(16px, 4vw, 48px); border-top: 1px solid #dcd9d0; margin-top: 24px;
+}
+footer .logo img { height: 36px; }
+.foot-links { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.foot-links a { color: var(--ink); text-underline-offset: 4px; }
+.foot-links a:hover { color: var(--cobalt); }
+footer .copy { flex-basis: 100%; margin: 0; color: var(--stone); font-size: 14px; }
+
+.legal { padding: clamp(24px, 5vw, 56px) clamp(16px, 4vw, 48px); max-width: 760px; }
+.legal h1 { font-size: clamp(36px, 6vw, 60px); margin-bottom: 8px; }
+.legal .updated { color: var(--stone); margin: 0 0 32px; }
+.legal h2 { font-family: var(--display); font-weight: 500; font-size: 24px; letter-spacing: -0.01em; margin: 32px 0 8px; }
+.legal p, .legal li { max-width: 62ch; }
+.legal a { text-underline-offset: 3px; }
+.contact-list { padding-left: 20px; }

@@ -234,7 +234,47 @@ function renderProduct(main) {
   });
 }
 
+
+/* ---------- Footer and legal pages ---------- */
+
+const FOOTER_LINKS = [
+  ["Terms", "legal.html?p=terms"],
+  ["Privacy", "legal.html?p=privacy"],
+  ["Refunds", "legal.html?p=refunds"],
+  ["Cookies", "legal.html?p=cookies"],
+];
+
+function renderFooter(el) {
+  const links = FOOTER_LINKS.slice();
+  if (SITE.email) links.push(["Contact", "mailto:" + SITE.email]);
+  if (SITE.instagram) links.push(["Instagram", SITE.instagram]);
+  if (SITE.tiktok) links.push(["TikTok", SITE.tiktok]);
+  el.innerHTML =
+    '<a class="logo" href="index.html" aria-label="Yave home"><img src="logo.png" alt="yave" width="606" height="261"></a>' +
+    '<nav class="foot-links" aria-label="Footer">' +
+    links.map(([t, u]) => '<a href="' + esc(u) + '"' + (/^https?:/.test(u) ? ' target="_blank" rel="noopener"' : "") + ">" + t + "</a>").join("") +
+    "</nav>" +
+    '<p class="copy">&copy; ' + new Date().getFullYear() + " Yave</p>";
+}
+
+function renderLegal(main) {
+  const key = new URLSearchParams(location.search).get("p");
+  const page = LEGAL[key];
+  if (!page) {
+    main.innerHTML = '<h1>Page not found</h1><p><a class="textlink" href="index.html">Back to the shop</a></p>';
+    return;
+  }
+  document.title = page.title + " | Yave";
+  main.innerHTML = "<h1>" + page.title + '</h1><p class="updated">Last updated ' + LEGAL_UPDATED + "</p>" +
+    page.body.replace(/\{\{EMAIL\}\}/g, SITE.email ? '<a href="mailto:' + esc(SITE.email) + '">' + esc(SITE.email) + "</a>" : "the email in our footer");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  const foot = document.querySelector("[data-footer]");
+  if (foot) renderFooter(foot);
+  const legalEl = document.querySelector("[data-legal]");
+  if (legalEl) renderLegal(legalEl);
+
   const shop = document.querySelector("[data-shop]");
   if (shop) renderShop(shop);
   const prod = document.querySelector("[data-product]");
@@ -246,9 +286,6 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     openGuide(t.dataset.tab, t.dataset.chart, t);
   });
-
-  const year = document.getElementById("year");
-  if (year) year.textContent = new Date().getFullYear();
 
   // Waitlist: needs a real Formspree ID (or any form endpoint) in the form's action.
   const wl = document.getElementById("waitlist");

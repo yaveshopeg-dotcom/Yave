@@ -5,6 +5,14 @@
 
 const CURRENCY = "EGP";
 
+// Your contact details. Fill these in and they appear in the footer and in the legal pages.
+// Leave a value empty ("") and it is hidden.
+const SITE = {
+  email: "yave.shop.eg@gmail.com", // the footer Contact link opens an email to this address
+  instagram: "",                   // e.g. "https://instagram.com/yourhandle"
+  tiktok: "",                      // e.g. "https://tiktok.com/@yourhandle"
+};
+
 const CHARTS = {
   crewneck: {
     title: "Premium oversized crewneck",
