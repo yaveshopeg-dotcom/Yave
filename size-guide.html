@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Size guide | Yave</title>
+  <meta name="description" content="Yave size chart and size recommendation based on your height and weight.">
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="logo" href="index.html" aria-label="Yave home"><img src="logo.png" alt="yave" width="606" height="261"></a>
+    <nav aria-label="Main">
+      <a href="size-guide.html" aria-current="page">Size guide</a>
+      <a href="index.html#about">About</a>
+      <a href="index.html#drop">First drop</a>
+    </nav>
+  </header>
+
+  <main class="guide">
+    <h1>Size guide</h1>
+
+    <div class="panel tabs">
+      <div class="tablist" role="tablist" aria-label="Size guide">
+        <button role="tab" id="tab-chart" aria-selected="true" aria-controls="panel-chart">Size chart</button>
+        <button role="tab" id="tab-rec" aria-selected="false" aria-controls="panel-rec" tabindex="-1">Size recommendation</button>
+      </div>
+      <div role="tabpanel" id="panel-chart" aria-labelledby="tab-chart" data-chart></div>
+      <div role="tabpanel" id="panel-rec" aria-labelledby="tab-rec" hidden>
+        <form class="finder bare" novalidate></form>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span class="logo"><img src="logo.png" alt="yave" width="606" height="261"></span>
+    <span>&copy; <span id="year"></span> Yave</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

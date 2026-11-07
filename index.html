@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yave</title>
+  <meta name="description" content="Yave. Clothing made to fit. Find your size before the first drop.">
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="logo" href="index.html" aria-label="Yave home"><img src="logo.png" alt="yave" width="606" height="261"></a>
+    <nav aria-label="Main">
+      <a href="size-guide.html">Size guide</a>
+      <a href="#about">About</a>
+      <a href="#drop">First drop</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>Know your size before you buy.</h1>
+        <p class="lede">Yave is clothing built around fit. Tell us your height and weight and we'll tell you what to order.</p>
+      </div>
+      <form class="finder" novalidate></form>
+    </section>
+
+    <section class="band" id="about">
+      <h2>Why Yave</h2>
+      <p>Most returns happen because the size was wrong. We publish exact garment measurements for every size and recommend one based on your body, not a guess.</p>
+      <p><a class="textlink" href="size-guide.html">See the full size chart</a></p>
+    </section>
+
+    <section class="band drop" id="drop">
+      <h2>The first drop is being made</h2>
+      <p>No products yet. Join the list and you'll hear first when they go live.</p>
+      <form class="waitlist" id="waitlist" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <label class="sr" for="email">Email</label>
+        <input id="email" name="email" type="email" required placeholder="you@email.com">
+        <button class="btn" type="submit">Join the list</button>
+      </form>
+      <p class="note" id="waitlist-note" role="status"></p>
+    </section>
+  </main>
+
+  <footer>
+    <span class="logo"><img src="logo.png" alt="yave" width="606" height="261"></span>
+    <span>&copy; <span id="year"></span> Yave</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
