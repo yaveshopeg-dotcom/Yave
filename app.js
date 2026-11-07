@@ -35,93 +35,221 @@ function recommend(heightCm, weightKg, fit) {
   return { idx, base, notes };
 }
 
-const FINDER_HTML = `
-  <h2>Find your size</h2>
-  <div class="row">
-    <label>Height
-      <span class="unit-input"><input name="cm" type="number" inputmode="numeric" min="130" max="230" placeholder="175"><em>cm</em></span>
-    </label>
-    <label>Weight
-      <span class="unit-input"><input name="kg" type="number" inputmode="numeric" min="30" max="200" placeholder="75"><em>kg</em></span>
-    </label>
-  </div>
-  <fieldset>
-    <legend>How do you like it to fit?</legend>
-    <label class="pill"><input type="radio" name="fit" value="snug"><span>Snug</span></label>
-    <label class="pill"><input type="radio" name="fit" value="true" checked><span>True to size</span></label>
-    <label class="pill"><input type="radio" name="fit" value="relaxed"><span>Relaxed</span></label>
-  </fieldset>
-  <button class="btn" type="submit">Find my size</button>
-  <div class="result" aria-live="polite"></div>
-`;
+/* ---------- Size guide popup ---------- */
 
-function chartHTML() {
-  return `
-  <div class="tablewrap">
-    <table>
-      <thead><tr><th scope="col">Size</th><th scope="col">Width</th><th scope="col">Length</th><th scope="col">Avg. weight</th></tr></thead>
-      <tbody>${SIZES.map((s) =>
-        `<tr data-size="${s.name}"><th scope="row">${s.name}</th><td>${s.width} cm</td><td>${s.length} cm</td><td>${s.weight[0]}–${s.weight[1]} kg</td></tr>`
-      ).join("")}</tbody>
-    </table>
+const MODAL_HTML = `
+<div class="sg-box">
+  <button class="sg-close" type="button" aria-label="Close size guide">&times;</button>
+  <h2 id="sg-title">Size guide</h2>
+  <div class="tablist" role="tablist" aria-label="Size guide">
+    <button role="tab" id="sg-tab-chart" aria-selected="true" aria-controls="sg-panel-chart">Size chart</button>
+    <button role="tab" id="sg-tab-rec" aria-selected="false" aria-controls="sg-panel-rec" tabindex="-1">Size recommendation</button>
   </div>
-  <p class="note">All garment measurements are in cm, taken flat. Width is across the chest, length is from the top of the shoulder to the hem.</p>`;
-}
 
-function initFinder(form) {
-  form.innerHTML = FINDER_HTML;
-  const result = form.querySelector(".result");
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const f = new FormData(form);
-    const h = parseFloat(f.get("cm"));
-    const w = parseFloat(f.get("kg"));
-    if (!h || !w || h < 130 || h > 230 || w < 30 || w > 200) {
-      result.innerHTML = '<p class="error">Enter your height in cm and your weight in kg.</p>';
-      return;
-    }
-    const fit = f.get("fit");
-    const r = recommend(h, w, fit);
-    const s = SIZES[r.idx];
-    const fitLine = fit === "snug"
-      ? "One size down from your base size (" + SIZES[r.base].name + ") for a snug fit."
-      : fit === "relaxed"
-        ? "One size up from your base size (" + SIZES[r.base].name + ") for a relaxed fit."
-        : "Your base size for this cut.";
-    result.innerHTML =
-      '<div class="size">' + s.name + "</div><p>" + fitLine + "</p>" +
-      '<p class="meta">Width ' + s.width + " cm, length " + s.length + " cm.</p>" +
-      r.notes.map((n) => '<p class="meta">' + n + "</p>").join("");
-    document.querySelectorAll("[data-size]").forEach((tr) => tr.classList.toggle("hit", tr.dataset.size === s.name));
+  <div role="tabpanel" id="sg-panel-chart" aria-labelledby="sg-tab-chart">
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Size</th><th scope="col">Width</th><th scope="col">Length</th><th scope="col">Avg. weight</th></tr></thead>
+        <tbody>${SIZES.map((s) =>
+          `<tr data-size="${s.name}"><th scope="row">${s.name}</th><td>${s.width} cm</td><td>${s.length} cm</td><td>${s.weight[0]}–${s.weight[1]} kg</td></tr>`
+        ).join("")}</tbody>
+      </table>
+    </div>
+    <p class="note">All garment measurements are in cm, taken flat. Width is across the chest, length is from the top of the shoulder to the hem.</p>
+  </div>
+
+  <div role="tabpanel" id="sg-panel-rec" aria-labelledby="sg-tab-rec" hidden>
+    <form class="sg-form" novalidate>
+      <h3>Find your size</h3>
+      <div class="row">
+        <label>Height
+          <span class="unit-input"><input name="cm" type="number" inputmode="numeric" min="130" max="230" placeholder="175"><em>cm</em></span>
+        </label>
+        <label>Weight
+          <span class="unit-input"><input name="kg" type="number" inputmode="numeric" min="30" max="200" placeholder="75"><em>kg</em></span>
+        </label>
+      </div>
+      <fieldset>
+        <legend>How do you like it to fit?</legend>
+        <label class="pill"><input type="radio" name="fit" value="snug"><span>Snug</span></label>
+        <label class="pill"><input type="radio" name="fit" value="true" checked><span>True to size</span></label>
+        <label class="pill"><input type="radio" name="fit" value="relaxed"><span>Relaxed</span></label>
+      </fieldset>
+      <button class="btn" type="submit">Find my size</button>
+      <div class="result" aria-live="polite"></div>
+    </form>
+  </div>
+</div>`;
+
+let dialog = null;
+let lastTrigger = null;
+
+function selectTab(name) {
+  const tabs = dialog.querySelectorAll('[role="tab"]');
+  const panels = dialog.querySelectorAll('[role="tabpanel"]');
+  tabs.forEach((t) => {
+    const on = t.id === "sg-tab-" + name;
+    t.setAttribute("aria-selected", String(on));
+    t.tabIndex = on ? 0 : -1;
   });
+  panels.forEach((p) => (p.hidden = p.id !== "sg-panel-" + name));
 }
 
-function initTabs(root) {
-  const tabs = root.querySelectorAll('[role="tab"]');
-  const panels = root.querySelectorAll('[role="tabpanel"]');
-  const select = (tab) => {
-    tabs.forEach((t) => {
-      const on = t === tab;
-      t.setAttribute("aria-selected", String(on));
-      t.tabIndex = on ? 0 : -1;
-    });
-    panels.forEach((p) => (p.hidden = p.id !== tab.getAttribute("aria-controls")));
-  };
+function pickSize(name) {
+  const input = document.querySelector('[data-size-picker] input[value="' + name + '"]');
+  if (!input) return;
+  input.checked = true;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function showResult(form) {
+  const result = form.querySelector(".result");
+  const f = new FormData(form);
+  const h = parseFloat(f.get("cm"));
+  const w = parseFloat(f.get("kg"));
+  if (!h || !w || h < 130 || h > 230 || w < 30 || w > 200) {
+    result.innerHTML = '<p class="error">Enter your height in cm and your weight in kg.</p>';
+    return;
+  }
+  const fit = f.get("fit");
+  const r = recommend(h, w, fit);
+  const s = SIZES[r.idx];
+  const fitLine = fit === "snug"
+    ? "One size down from your base size (" + SIZES[r.base].name + ") for a snug fit."
+    : fit === "relaxed"
+      ? "One size up from your base size (" + SIZES[r.base].name + ") for a relaxed fit."
+      : "Your base size for this cut.";
+  const canPick = !!document.querySelector("[data-size-picker]");
+  result.innerHTML =
+    '<div class="size">' + s.name + "</div><p>" + fitLine + "</p>" +
+    '<p class="meta">Width ' + s.width + " cm, length " + s.length + " cm.</p>" +
+    r.notes.map((n) => '<p class="meta">' + n + "</p>").join("") +
+    (canPick ? '<button class="btn use" type="button" data-use="' + s.name + '">Select size ' + s.name + "</button>" : "");
+  dialog.querySelectorAll("[data-size]").forEach((tr) => tr.classList.toggle("hit", tr.dataset.size === s.name));
+}
+
+function buildDialog() {
+  dialog = document.createElement("dialog");
+  dialog.className = "sg";
+  dialog.setAttribute("aria-labelledby", "sg-title");
+  dialog.innerHTML = MODAL_HTML;
+  document.body.appendChild(dialog);
+
+  dialog.querySelector(".sg-close").addEventListener("click", () => dialog.close());
+  // Click on the dark backdrop closes it.
+  dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
+  dialog.addEventListener("close", () => {
+    document.documentElement.classList.remove("sg-open");
+    if (lastTrigger) lastTrigger.focus();
+  });
+
+  const tabs = dialog.querySelectorAll('[role="tab"]');
   tabs.forEach((t, i) => {
-    t.addEventListener("click", () => select(t));
+    t.addEventListener("click", () => selectTab(t.id.replace("sg-tab-", "")));
     t.addEventListener("keydown", (e) => {
       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
       const next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
-      select(next);
+      selectTab(next.id.replace("sg-tab-", ""));
       next.focus();
     });
   });
+
+  const form = dialog.querySelector(".sg-form");
+  form.addEventListener("submit", (e) => { e.preventDefault(); showResult(form); });
+  form.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-use]");
+    if (!b) return;
+    pickSize(b.dataset.use);
+    dialog.close();
+  });
+}
+
+function openGuide(tab, trigger) {
+  if (!dialog) buildDialog();
+  lastTrigger = trigger || null;
+  selectTab(tab === "rec" ? "rec" : "chart");
+  document.documentElement.classList.add("sg-open");
+  if (!dialog.open) dialog.showModal();
+}
+
+/* ---------- Product size picker (used on product pages) ---------- */
+
+function initSizePicker(el) {
+  el.innerHTML = SIZES.map((s) =>
+    `<label class="pill"><input type="radio" name="size" value="${s.name}"><span>${s.name}</span></label>`
+  ).join("");
+  const out = document.querySelector("[data-size-selected]");
+  el.addEventListener("change", () => {
+    const v = el.querySelector("input:checked");
+    if (out && v) out.textContent = "Size " + v.value + " selected";
+  });
+}
+
+
+/* ---------- Shop and product pages (built from products.js) ---------- */
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function money(n) { return CURRENCY + " " + Number(n).toLocaleString("en-US"); }
+
+function renderShop(grid) {
+  const empty = document.querySelector("[data-empty]");
+  if (!PRODUCTS.length) {
+    if (empty) empty.hidden = false;
+    return;
+  }
+  grid.innerHTML = PRODUCTS.map((p) =>
+    '<a class="card" href="product.html?p=' + encodeURIComponent(p.id) + '">' +
+    '<div class="card-img">' + (p.images && p.images[0] ? '<img src="' + esc(p.images[0]) + '" alt="' + esc(p.name) + '" loading="lazy">' : "") + "</div>" +
+    "<h3>" + esc(p.name) + "</h3><p>" + money(p.price) + "</p></a>"
+  ).join("");
+}
+
+function renderProduct(main) {
+  const id = new URLSearchParams(location.search).get("p");
+  const p = PRODUCTS.find((x) => x.id === id);
+  if (!p) {
+    main.className = "";
+    main.innerHTML = '<div class="band"><h2>Product not found</h2><p><a class="textlink" href="index.html#shop">Back to the shop</a></p></div>';
+    return;
+  }
+  document.title = p.name + " | Yave";
+  const imgs = p.images || [];
+  main.innerHTML =
+    '<div class="gallery"><div class="product-img">' +
+      (imgs[0] ? '<img id="main-img" src="' + esc(imgs[0]) + '" alt="' + esc(p.name) + '">' : "") + "</div>" +
+      (imgs.length > 1 ? '<div class="thumbs">' + imgs.map((s, i) =>
+        '<button type="button" data-img="' + esc(s) + '" aria-label="Photo ' + (i + 1) + '"><img src="' + esc(s) + '" alt=""></button>').join("") + "</div>" : "") +
+    "</div>" +
+    "<div><h1>" + esc(p.name) + "</h1>" +
+    '<p class="price">' + money(p.price) + "</p>" +
+    (p.description ? '<p class="desc">' + esc(p.description) + "</p>" : "") +
+    '<div class="size-head"><span>Size</span><span class="size-links">' +
+      '<button type="button" data-size-guide data-tab="chart">Size chart</button>' +
+      '<button type="button" data-size-guide data-tab="rec">Size recommendation</button></span></div>' +
+    '<div class="sizes" data-size-picker role="radiogroup" aria-label="Size"></div>' +
+    '<p class="size-selected" data-size-selected role="status"></p>' +
+    '<button class="btn" type="button" disabled>Add to cart (store coming soon)</button></div>';
+  main.querySelectorAll("[data-img]").forEach((b) => b.addEventListener("click", () => {
+    document.getElementById("main-img").src = b.dataset.img;
+  }));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("form.finder").forEach(initFinder);
-  document.querySelectorAll("[data-chart]").forEach((el) => (el.innerHTML = chartHTML()));
-  document.querySelectorAll(".tabs").forEach(initTabs);
+  const shop = document.querySelector("[data-shop]");
+  if (shop) renderShop(shop);
+  const prod = document.querySelector("[data-product]");
+  if (prod) renderProduct(prod);
+
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-size-guide]");
+    if (!t) return;
+    e.preventDefault();
+    openGuide(t.dataset.tab, t);
+  });
+
+  document.querySelectorAll("[data-size-picker]").forEach(initSizePicker);
 
   const year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();

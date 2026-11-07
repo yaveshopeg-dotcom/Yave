@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Yave</title>
-  <meta name="description" content="Yave. Clothing made to fit. Find your size before the first drop.">
+  <meta name="description" content="Yave. Clothing made to fit. Pick a product and find your size.">
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,36 +15,29 @@
   <header class="nav">
     <a class="logo" href="index.html" aria-label="Yave home"><img src="logo.png" alt="yave" width="606" height="261"></a>
     <nav aria-label="Main">
-      <a href="size-guide.html">Size guide</a>
-      <a href="#about">About</a>
-      <a href="#drop">First drop</a>
+      <a href="#shop">Shop</a>
+      <button class="navlink" type="button" data-size-guide data-tab="chart">Size guide</button>
     </nav>
   </header>
 
   <main>
-    <section class="hero">
-      <div class="hero-copy">
-        <h1>Know your size before you buy.</h1>
-        <p class="lede">Yave is clothing built around fit. Tell us your height and weight and we'll tell you what to order.</p>
+    <section class="hero compact">
+      <h1>Know your size before you buy.</h1>
+      <p class="lede">Pick a piece, then tap Size recommendation and we'll tell you what to order.</p>
+    </section>
+
+    <section class="shop" id="shop" aria-label="Products">
+      <div class="grid" data-shop></div>
+      <div class="band drop" id="drop" data-empty hidden>
+        <h2>The first drop is being made</h2>
+        <p>No products yet. Join the list and you'll hear first when they go live.</p>
+        <form class="waitlist" id="waitlist" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+          <label class="sr" for="email">Email</label>
+          <input id="email" name="email" type="email" required placeholder="you@email.com">
+          <button class="btn" type="submit">Join the list</button>
+        </form>
+        <p class="note" id="waitlist-note" role="status"></p>
       </div>
-      <form class="finder" novalidate></form>
-    </section>
-
-    <section class="band" id="about">
-      <h2>Why Yave</h2>
-      <p>Most returns happen because the size was wrong. We publish exact garment measurements for every size and recommend one based on your body, not a guess.</p>
-      <p><a class="textlink" href="size-guide.html">See the full size chart</a></p>
-    </section>
-
-    <section class="band drop" id="drop">
-      <h2>The first drop is being made</h2>
-      <p>No products yet. Join the list and you'll hear first when they go live.</p>
-      <form class="waitlist" id="waitlist" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
-        <label class="sr" for="email">Email</label>
-        <input id="email" name="email" type="email" required placeholder="you@email.com">
-        <button class="btn" type="submit">Join the list</button>
-      </form>
-      <p class="note" id="waitlist-note" role="status"></p>
     </section>
   </main>
 
@@ -53,6 +46,7 @@
     <span>&copy; <span id="year"></span> Yave</span>
   </footer>
 
+  <script src="products.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

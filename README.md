@@ -4,8 +4,9 @@ Static website for the Yave brand. No build step, no dependencies.
 
 ## Files
 - `index.html` – homepage with the size finder and waitlist
-- `size-guide.html` – size chart, how to measure, size finder
-- `app.js` – size data and recommendation logic (edit `SIZES` to change the chart)
+- `products.js` – your product list. Add a product here and it appears on the home page with its own page
+- `product.html` – the product page (one template, filled from `products.js`)
+- `app.js` – size data and recommendation logic (edit `SIZES` to change the chart; also builds the size guide popup)
 - `logo.png` / `favicon.png` – brand logo (transparent) and tab icon
 - `style.css` – all styles and colour tokens (`:root`)
 
@@ -19,5 +20,10 @@ Open `index.html` in a browser, or run `npx serve .`
 ## Waitlist
 In `index.html`, replace `YOUR_FORM_ID` in the waitlist form's `action` with a real Formspree form ID (or another form endpoint).
 
-## Adding products later
-Add a `shop.html` and a product grid, or move to a store backend such as Shopify or Stripe Checkout when you're ready to sell.
+## Adding a product
+1. Upload the photos to an `images` folder in the repo.
+2. Copy the example in `products.js`, remove the `//` marks and fill it in.
+3. Commit. The home page and a product page update by themselves.
+
+## Store later
+When you're ready to take orders, connect a checkout such as Stripe Checkout or Shopify and replace the disabled Add to cart button.
