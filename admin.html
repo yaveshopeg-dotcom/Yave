@@ -4,56 +4,49 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Orders | Yave</title>
+  <title>Dashboard | Yave</title>
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-  <main class="wrap">
-    <section id="login" class="login">
-      <p class="eyebrow">yave.shop</p>
-      <h1>Orders</h1>
-      <form id="login-form">
-        <label for="pw">Password</label>
-        <input id="pw" type="password" autocomplete="current-password" required>
-        <button class="btn" type="submit">Open dashboard</button>
-        <p id="login-error" class="err" role="alert"></p>
-      </form>
-    </section>
+  <section id="login" class="login">
+    <form id="login-form" class="card login-card">
+      <img src="logo.png" alt="yave" width="606" height="261" class="login-logo">
+      <h1>Dashboard</h1>
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <button class="btn" type="submit">Open dashboard</button>
+      <p id="login-error" class="err" role="alert"></p>
+    </form>
+  </section>
 
-    <section id="app" hidden>
-      <header class="top">
-        <div>
-          <p class="eyebrow">yave.shop</p>
-          <h1>Orders</h1>
-        </div>
-        <div class="actions">
-          <button class="ghost" id="refresh" type="button">Refresh</button>
-          <button class="ghost" id="export" type="button">Export CSV</button>
-          <button class="ghost" id="logout" type="button">Log out</button>
-        </div>
-      </header>
-
-      <p id="banner" class="banner" role="status" hidden></p>
-
-      <div class="stats">
-        <div class="stat"><span>Pending</span><strong id="s-pending">0</strong></div>
-        <div class="stat"><span>In progress</span><strong id="s-progress">0</strong></div>
-        <div class="stat"><span>Completed</span><strong id="s-done">0</strong></div>
-        <div class="stat"><span>Sales completed</span><strong id="s-sales">0 EGP</strong></div>
+  <div id="app" hidden>
+    <header class="nav">
+      <a class="logo" href="/" aria-label="Yave shop"><img src="logo.png" alt="yave" width="606" height="261"></a>
+      <div class="actions">
+        <button class="ghost" id="refresh" type="button">Refresh</button>
+        <button class="ghost" id="logout" type="button">Log out</button>
       </div>
+    </header>
 
-      <div class="chips" id="chips" role="tablist" aria-label="Filter by status"></div>
+    <nav class="tabs" id="tabs" aria-label="Dashboard sections">
+      <button type="button" data-tab="overview" class="on">Overview</button>
+      <button type="button" data-tab="orders">Orders</button>
+      <button type="button" data-tab="customers">Customers</button>
+      <button type="button" data-tab="printlet">Printlet</button>
+    </nav>
 
-      <label class="search"><span>Search name, phone, order number or city</span><input id="search" type="search" autocomplete="off"></label>
-
-      <div id="list"></div>
-      <p id="empty" class="empty" hidden>No orders here yet. New orders appear on this page.</p>
-    </section>
-  </main>
+    <main class="wrap">
+      <p id="banner" class="banner" role="status" hidden></p>
+      <section id="view-overview" class="view"></section>
+      <section id="view-orders" class="view" hidden></section>
+      <section id="view-customers" class="view" hidden></section>
+      <section id="view-printlet" class="view" hidden></section>
+    </main>
+  </div>
   <script src="admin.js"></script>
 </body>
 </html>

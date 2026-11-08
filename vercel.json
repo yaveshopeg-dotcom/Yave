@@ -42,6 +42,14 @@
     {
       "source": "/api/admin/orders",
       "destination": "/api/server?r=admin"
+    },
+    {
+      "source": "/api/admin/customers",
+      "destination": "/api/server?r=customers"
+    },
+    {
+      "source": "/api/printlet/webhook",
+      "destination": "/api/server?r=printlet"
     }
   ]
 }
