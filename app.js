@@ -188,7 +188,7 @@ function renderShop(grid) {
   grid.innerHTML = PRODUCTS.map((p) =>
     '<a class="card" href="product.html?p=' + encodeURIComponent(p.id) + '">' +
     '<div class="card-img">' + (p.images && p.images[0] ? '<img src="' + esc(p.images[0]) + '" alt="' + esc(p.name) + '" loading="lazy">' : "") + "</div>" +
-    "<h3>" + esc(p.name) + "</h3><p>" + money(p.price) + "</p></a>"
+    "<h3>" + esc(p.name) + "</h3><p>" + priceHTML(p) + "</p></a>"
   ).join("");
 }
 
@@ -210,7 +210,7 @@ function renderProduct(main) {
         '<button type="button" data-img="' + esc(s) + '" aria-label="Photo ' + (i + 1) + '"><img src="' + esc(s) + '" alt=""></button>').join("") + "</div>" : "") +
     "</div>" +
     "<div><h1>" + esc(p.name) + "</h1>" +
-    '<p class="price">' + money(p.price) + "</p>" +
+    '<p class="price">' + priceHTML(p) + "</p>" +
     (p.description ? '<p class="desc">' + esc(p.description) + "</p>" : "") +
     (chart
       ? '<div class="size-head"><span>Size</span><span class="size-links">' +
@@ -281,6 +281,12 @@ function addCartLink() {
   a.innerHTML = 'Cart <span class="cart-count" hidden></span>';
   nav.appendChild(a);
   updateCartCount();
+}
+
+function priceHTML(p) {
+  return p.compareAt && p.compareAt > p.price
+    ? '<s class="was">' + money(p.compareAt) + "</s> " + money(p.price)
+    : money(p.price);
 }
 
 function renderCartPage(main) {

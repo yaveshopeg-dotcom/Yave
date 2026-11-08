@@ -39,6 +39,15 @@ const CHARTS = {
 };
 
 const PRODUCTS = [
+  {
+    id: "forest-green-crewneck",
+    name: "Forest Green Crewneck",
+    price: 750,
+    compareAt: 1100,
+    chart: "crewneck",
+    images: ["forest-green-1.jpg", "forest-green-2.jpg", "forest-green-3.jpg"],
+    description: "Premium oversized crewneck in forest green. Heavy, soft fleece with a dropped shoulder and a relaxed fit.",
+  },
   // To add a product, copy this example, remove the // marks and fill it in.
   // {
   //   id: "stealth-tee",              // lowercase, no spaces. Used in the page link.
@@ -47,5 +56,6 @@ const PRODUCTS = [
   //   chart: "crewneck",              // must match a name in CHARTS above
   //   images: ["images/stealth-tee-1.jpg", "images/stealth-tee-2.jpg"],
   //   description: "Heavyweight cotton. Oversized fit.",
+  //   printletSku: "",                // optional: the product name or code in your Printlet account
   // },
 ];

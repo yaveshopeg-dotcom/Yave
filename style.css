@@ -238,3 +238,5 @@ footer .copy { flex-basis: 100%; margin: 0; color: var(--stone); font-size: 14px
 
 .cart-sum { display: flex; justify-content: space-between; padding: 10px 0 0; color: var(--stone); }
 .checkout select { font: inherit; padding: 12px 14px; border-radius: 10px; border: 1.5px solid #cfccc3; background: var(--paper); width: 100%; color: var(--ink); }
+
+.was { color: var(--stone); opacity: .75; margin-right: 6px; }
