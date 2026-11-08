@@ -3,7 +3,7 @@
   "trailingSlash": false,
   "functions": {
     "api/server.js": {
-      "includeFiles": "products.js"
+      "includeFiles": "{products.js,shipping.js}"
     }
   },
   "headers": [

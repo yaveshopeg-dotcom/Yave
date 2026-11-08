@@ -291,12 +291,13 @@ function renderCartPage(main) {
       "<h2>Delivery details</h2>" +
       '<label>Full name<input name="name" autocomplete="name" required maxlength="80"></label>' +
       '<label>Phone number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" required maxlength="20" placeholder="01xxxxxxxxx"></label>' +
-      '<label>City or governorate<input name="city" autocomplete="address-level2" required maxlength="60"></label>' +
+      '<label>Governorate<select name="city" required><option value="">Choose your governorate</option>' +
+        SHIPPING.map((g) => '<option value="' + esc(g.name) + '">' + esc(g.name) + " (" + money(g.fee) + ")</option>").join("") + "</select></label>" +
       '<label>Full address<textarea name="address" rows="3" autocomplete="street-address" required maxlength="250" placeholder="Street, building, floor, apartment"></textarea></label>' +
       '<label>Email (optional)<input name="email" type="email" autocomplete="email" maxlength="120"></label>' +
       '<label>Notes (optional)<textarea name="notes" rows="2" maxlength="300"></textarea></label>' +
       '<label class="sr">Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label>' +
-      '<p class="pay-note">Payment is cash on delivery: you pay the courier when your order arrives. We will call you to confirm the delivery fee and arrival date.</p>' +
+      '<p class="pay-note">Payment is cash on delivery: you pay the courier when your order arrives. We will call you to confirm your arrival date.</p>' +
       '<button class="btn" type="submit">Place order</button>' +
       '<p class="form-error" role="alert"></p>' +
     "</form>";
@@ -321,9 +322,12 @@ function renderCartPage(main) {
         '<div class="cart-line">' + money(p.price * it.qty) + "</div></div>";
     }).join("");
     const subtotal = cart.reduce((n, it) => n + PRODUCTS.find((x) => x.id === it.id).price * it.qty, 0);
-    list.innerHTML = rows + '<div class="cart-total"><span>Subtotal</span><strong>' + money(subtotal) + "</strong></div>" +
-      '<p class="note">Delivery fee is confirmed by phone after you order.</p>';
+    const gov = SHIPPING.find((g) => g.name === form.elements.city.value);
+    list.innerHTML = rows + '<div class="cart-sum"><span>Subtotal</span><span>' + money(subtotal) + "</span></div>" +
+      '<div class="cart-sum"><span>Delivery</span><span>' + (gov ? money(gov.fee) : "Choose your governorate") + "</span></div>" +
+      '<div class="cart-total"><span>Total to pay on delivery</span><strong>' + (gov ? money(subtotal + gov.fee) : money(subtotal) + " + delivery") + "</strong></div>";
   }
+  form.elements.city.addEventListener("change", draw);
   list.addEventListener("click", (e) => {
     const cart = loadCart();
     const t = e.target.closest("button");
@@ -344,7 +348,7 @@ function renderCartPage(main) {
     const customer = { name: f.get("name"), phone: f.get("phone"), city: f.get("city"), address: f.get("address"), email: f.get("email"), notes: f.get("notes") };
     if (String(customer.name).trim().length < 2) { err.textContent = "Enter your full name."; return; }
     if (String(customer.phone).replace(/\D/g, "").length < 10) { err.textContent = "Enter a phone number we can call, at least 10 digits."; return; }
-    if (String(customer.city).trim().length < 2) { err.textContent = "Enter your city or governorate."; return; }
+    if (String(customer.city).trim().length < 2) { err.textContent = "Choose your governorate."; return; }
     if (String(customer.address).trim().length < 5) { err.textContent = "Enter your full delivery address."; return; }
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true; btn.textContent = "Placing order...";
@@ -357,7 +361,7 @@ function renderCartPage(main) {
       if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
       cartMem = []; saveCart();
       main.innerHTML = '<div class="order-done"><h1>Order received</h1><p class="order-no">' + esc(data.id) + "</p>" +
-        "<p>Thank you. We will call you on the number you gave to confirm your delivery fee and arrival date. You pay the courier in cash when your order arrives.</p>" +
+        "<p>Thank you. We will call you on the number you gave to confirm your arrival date. You pay the courier in cash when your order arrives.</p>" +
         '<p><a class="textlink" href="index.html">Back to the shop</a></p></div>';
       window.scrollTo(0, 0);
     } catch (ex) {

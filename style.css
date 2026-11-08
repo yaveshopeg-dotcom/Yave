@@ -235,3 +235,6 @@ footer .copy { flex-basis: 100%; margin: 0; color: var(--stone); font-size: 14px
 .btn[disabled] { opacity: .5; cursor: not-allowed; }
 .order-done .order-no { font-family: var(--display); font-size: 40px; margin: 0 0 16px; }
 @media (max-width: 560px) { .cart-row { grid-template-columns: 56px 1fr; } .cart-img { width: 56px; } .qty, .cart-line { grid-column: 2; justify-self: start; text-align: left; } }
+
+.cart-sum { display: flex; justify-content: space-between; padding: 10px 0 0; color: var(--stone); }
+.checkout select { font: inherit; padding: 12px 14px; border-radius: 10px; border: 1.5px solid #cfccc3; background: var(--paper); width: 100%; color: var(--ink); }
